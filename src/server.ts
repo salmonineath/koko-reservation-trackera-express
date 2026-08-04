@@ -1,23 +1,26 @@
-import express, { Request, Response } from "express";
+import express from "express";
+import { connectDB } from "@/config/database";
+import { env } from "@/config/env";
 
 const app = express();
-const PORT = 3000;
 
-// Allow Express to read JSON request bodies
 app.use(express.json());
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req, res) => {
   res.json({
-    message: "Express TypeScript server is running"
+    message: "API is running",
   });
 });
 
-app.get("/api/hello", (req: Request, res: Response) => {
-  res.json({
-    message: "Hello from the API"
-  });
-});
+const startServer = async (): Promise<void> => {
+  await connectDB();
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  app.listen(env.PORT, () => {
+    console.log(`Server running on http://localhost:${env.PORT}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
 });

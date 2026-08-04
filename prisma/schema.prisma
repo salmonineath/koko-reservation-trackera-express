@@ -1,0 +1,25 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"   // this project is CommonJS ("type": "commonjs" in package.json)
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Starter model just to prove the migration pipeline works end to end.
+// Replace/extend with your real reservation schema.
+model Reservation {
+  id           Int      @id @default(autoincrement())
+  customerName String
+  date         DateTime
+  status       String   @default("pending")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
