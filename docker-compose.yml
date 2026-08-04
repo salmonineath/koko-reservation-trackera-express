@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: koko_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data   # named volume, permission-safe for the postgres image
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Periodically dumps the db to ./backups, a plain host folder.
+  # It is NOT a Docker volume, so `docker compose down -v` can't touch it —
+  # this is what survives even if db_data ever gets wiped.
+  db_backup:
+    image: postgres:16-alpine
+    container_name: koko_db_backup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB}
+    volumes:
+      - ./backups:/backups
+    entrypoint: >
+      sh -c "
+        while true; do
+          pg_dump > /backups/backup_$$(date +%Y%m%d_%H%M%S).sql;
+          find /backups -name 'backup_*.sql' -mtime +7 -delete;
+          sleep 3600;
+        done
+      "
+
+volumes:
+  db_data:
