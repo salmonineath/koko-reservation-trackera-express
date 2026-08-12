@@ -6,20 +6,75 @@
 generator client {
   provider     = "prisma-client"
   output       = "../src/generated/prisma"
-  moduleFormat = "cjs"   // this project is CommonJS ("type": "commonjs" in package.json)
+  moduleFormat = "cjs" // this project is CommonJS ("type": "commonjs" in package.json)
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// Starter model just to prove the migration pipeline works end to end.
-// Replace/extend with your real reservation schema.
+// Matches doc section 5.1 and the Add Reservation / Reservations design screens.
+enum ReservationSource {
+  FACEBOOK
+  INSTAGRAM
+  TIKTOK
+  PHONE_CALL
+  WALK_IN
+  INFLUENCER
+  RETURNING_CUSTOMER
+  UNKNOWN
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
 model Reservation {
-  id           Int      @id @default(autoincrement())
+  id           Int               @id @default(autoincrement())
   customerName String
+  phone        String
+  // Date + time combined into one instant (form shows them as two inputs,
+  // but storing one DateTime avoids timezone/sort bugs vs. two raw columns).
   date         DateTime
-  status       String   @default("pending")
+  guests       Int
+  source       ReservationSource
+  status       ReservationStatus @default(PENDING)
+  notes        String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  @@index([date])
+  @@index([status])
+  @@index([source])
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+}
+
+// Rotation model: each row is one issued refresh token. Only its SHA-256 hash is
+// stored (never the raw token) so a DB leak alone doesn't hand out usable tokens.
+// On every /auth/refresh call the matching row is revoked and a new row is
+// created - a still-valid, previously-revoked hash showing up again means the
+// token was stolen/reused, which is the trigger to revoke the whole family.
+model RefreshToken {
+  id                  Int       @id @default(autoincrement())
+  tokenHash           String    @unique
+  userId              Int
+  user                User      @relation(fields: [userId], references: [id])
+  expiresAt           DateTime
+  revokedAt           DateTime?
+  replacedByTokenHash String?
+  createdAt           DateTime  @default(now())
+
+  @@index([userId])
 }

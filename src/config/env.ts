@@ -1,12 +1,23 @@
 import "dotenv/config";
+import { z } from "zod";
 
-const DATABASE_URL = process.env.DATABASE_URL;
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  PORT: z.coerce.number().int().positive().default(3000),
+  DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
+  // Access token: short-lived JWT, verified statelessly on every request.
+  JWT_SECRET: z.string().min(16, "JWT_SECRET must be at least 16 characters"),
+  ACCESS_TOKEN_EXPIRES_IN: z.string().default("15m"),
+  // Refresh token: long-lived opaque value, stored (hashed) in the DB and rotated
+  // on every use - see the RefreshToken model.
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+});
 
-if (!DATABASE_URL) {
-  throw new Error("DATABASE_URL is not defined in the environment variables");
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  console.error("Invalid enviroment configuration:", parsed.error.flatten().fieldErrors);
+  throw new Error ("Invalied enviroment configration - check your .env file.");
 }
 
-export const env = {
-    PORT: Number(process.env.PORT) || 3000,
-    DATABASE_URL,
-};
+export const env = parsed.data;
