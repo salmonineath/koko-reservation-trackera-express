@@ -15,14 +15,16 @@ const envSchema = z.object({
   // Required in every environment (not just production) so CORS/cookie
   // behavior is identical between dev and prod - set to your local frontend
   // dev URL (e.g. http://localhost:5173) locally.
-  FRONTEND_ORIGIN: z.string().url("FRONTEND_ORIGIN must be a valid URL, e.g. http://localhost:5173"),
+  FRONTEND_ORIGIN: z
+    .string()
+    .url("FRONTEND_ORIGIN must be a valid URL, e.g. http://localhost:5173"),
 });
 
 const parsed = envSchema.safeParse(process.env);
 
 if (!parsed.success) {
   console.error("Invalid enviroment configuration:", parsed.error.flatten().fieldErrors);
-  throw new Error ("Invalied enviroment configration - check your .env file.");
+  throw new Error("Invalied enviroment configration - check your .env file.");
 }
 
 export const env = parsed.data;

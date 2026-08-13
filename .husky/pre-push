@@ -1,0 +1,5 @@
+# Fast local feedback before code leaves your machine - the actual,
+# unbypassable gate is the "verify" check required by GitHub branch protection
+# on main (see .github/workflows/ci.yml). This can be skipped with
+# `git push --no-verify`; that one can't.
+npm run verify

@@ -89,7 +89,10 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
       where: { userId: existing.userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
-    throw new HttpError(401, "Refresh token reuse detected - all sessions revoked, please log in again");
+    throw new HttpError(
+      401,
+      "Refresh token reuse detected - all sessions revoked, please log in again",
+    );
   }
 
   if (existing.expiresAt < new Date()) {

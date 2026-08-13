@@ -60,7 +60,12 @@ app.get("/", (_req, res) => {
 // disabled for this route only (not globally) because helmet's default CSP
 // blocks the inline scripts swagger-ui-express relies on to render.
 if (env.NODE_ENV !== "production") {
-  app.use("/api-docs", helmet({ contentSecurityPolicy: false }), swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use(
+    "/api-docs",
+    helmet({ contentSecurityPolicy: false }),
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec),
+  );
 }
 
 app.use("/api/auth", authRoutes);

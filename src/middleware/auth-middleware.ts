@@ -18,7 +18,9 @@ export const requireAuth = (req: Request, _res: Response, next: NextFunction): v
   const token = header.slice("Bearer ".length);
 
   try {
-    req.user = jwt.verify(token, env.JWT_SECRET, { algorithms: ["HS256"] }) as unknown as AuthTokenPayload;
+    req.user = jwt.verify(token, env.JWT_SECRET, {
+      algorithms: ["HS256"],
+    }) as unknown as AuthTokenPayload;
     next();
   } catch {
     next(new HttpError(401, "Invalid or expired token"));

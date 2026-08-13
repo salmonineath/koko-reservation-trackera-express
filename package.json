@@ -8,14 +8,25 @@
     "build": "tsc && tsc-alias",
     "start": "node dist/server.js",
     "type-check": "tsc --noEmit",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "format": "biome format --write .",
+    "format:check": "biome format .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "verify": "biome ci . && npm run type-check && npm run build",
     "db:seed": "tsx src/script/seed.ts",
     "postinstall": "prisma generate",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "prepare": "husky",
+    "test": "echo \"No automated tests yet - lint/type-check/build in CI are the current safety net\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
@@ -32,6 +43,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.8",
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
@@ -42,9 +54,16 @@
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "dotenv": "^17.4.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
     "prisma": "^7.9.1",
     "tsc-alias": "^1.9.1",
     "tsx": "^4.23.5",
     "typescript": "^7.0.2"
+  },
+  "lint-staged": {
+    "*.{ts,js,json}": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   }
 }

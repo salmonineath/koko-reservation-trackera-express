@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  verify:
+    name: Lint, format, type-check, build
+    runs-on: ubuntu-latest
+    env:
+      # prisma generate (runs via postinstall) only needs this to resolve
+      # schema.prisma's env("DATABASE_URL") - nothing in this workflow
+      # actually connects to a database.
+      DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Same command as the local pre-push hook (see .husky/pre-push) - one
+      # source of truth for what "passes" means, checked twice: fast locally,
+      # authoritative here. biome ci checks lint + formatting without writing.
+      - run: npm run verify

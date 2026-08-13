@@ -21,7 +21,8 @@ const options: swaggerJsdoc.Options = {
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
-          description: "Paste the token returned from POST /auth/login (no 'Bearer ' prefix needed here).",
+          description:
+            "Paste the token returned from POST /auth/login (no 'Bearer ' prefix needed here).",
         },
       },
       schemas: {
@@ -41,7 +42,8 @@ const options: swaggerJsdoc.Options = {
           properties: {
             accessToken: {
               type: "string",
-              description: "Short-lived JWT (see ACCESS_TOKEN_EXPIRES_IN). Send as 'Authorization: Bearer <accessToken>'.",
+              description:
+                "Short-lived JWT (see ACCESS_TOKEN_EXPIRES_IN). Send as 'Authorization: Bearer <accessToken>'.",
               example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             },
             user: {
@@ -112,7 +114,10 @@ const options: swaggerJsdoc.Options = {
           type: "object",
           properties: {
             error: { type: "string", example: "Validation failed" },
-            details: { type: "object", additionalProperties: { type: "array", items: { type: "string" } } },
+            details: {
+              type: "object",
+              additionalProperties: { type: "array", items: { type: "string" } },
+            },
           },
         },
       },
