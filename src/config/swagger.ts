@@ -35,16 +35,14 @@ const options: swaggerJsdoc.Options = {
         },
         AuthResponse: {
           type: "object",
+          description:
+            "The refresh token is NOT in this body - it's set via an HttpOnly " +
+            "Set-Cookie (path=/api/auth), unreadable by frontend JS.",
           properties: {
             accessToken: {
               type: "string",
               description: "Short-lived JWT (see ACCESS_TOKEN_EXPIRES_IN). Send as 'Authorization: Bearer <accessToken>'.",
               example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            },
-            refreshToken: {
-              type: "string",
-              description: "Long-lived opaque token. Store it, and exchange it via POST /auth/refresh once the access token expires. Single-use — rotates on every refresh.",
-              example: "9f1c...40-byte-hex",
             },
             user: {
               type: "object",
@@ -54,13 +52,6 @@ const options: swaggerJsdoc.Options = {
                 createdAt: { type: "string", format: "date-time" },
               },
             },
-          },
-        },
-        RefreshTokenInput: {
-          type: "object",
-          required: ["refreshToken"],
-          properties: {
-            refreshToken: { type: "string", example: "9f1c...40-byte-hex" },
           },
         },
         Reservation: {
