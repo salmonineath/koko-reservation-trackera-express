@@ -11,6 +11,11 @@ const envSchema = z.object({
   // Refresh token: long-lived opaque value, stored (hashed) in the DB and rotated
   // on every use - see the RefreshToken model.
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  // Single browser origin allowed to call this API with credentials (cookies).
+  // Required in every environment (not just production) so CORS/cookie
+  // behavior is identical between dev and prod - set to your local frontend
+  // dev URL (e.g. http://localhost:5173) locally.
+  FRONTEND_ORIGIN: z.string().url("FRONTEND_ORIGIN must be a valid URL, e.g. http://localhost:5173"),
 });
 
 const parsed = envSchema.safeParse(process.env);
