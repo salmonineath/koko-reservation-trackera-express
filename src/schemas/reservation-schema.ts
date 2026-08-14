@@ -39,6 +39,18 @@ export const listReservationsQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(12),
 });
 
+// Dashboard KPI cards/donuts (see doc/DASHBOARD_SCOPE_REVIEW.md) - deliberately
+// NOT the "Reservations Trend" chart or anything social-media/content-related;
+// those are out of scope for this release regardless of data availability.
+export const dashboardStatsQuerySchema = z.object({
+  // Defaults to the current calendar month if omitted.
+  month: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, "month must be in YYYY-MM format")
+    .optional(),
+});
+
 export type CreateReservationInput = z.infer<typeof createReservationSchema>;
 export type UpdateReservationInput = z.infer<typeof updateReservationSchema>;
 export type ListReservationsQuery = z.infer<typeof listReservationsQuerySchema>;
+export type DashboardStatsQuery = z.infer<typeof dashboardStatsQuerySchema>;

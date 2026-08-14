@@ -10,6 +10,7 @@ import { HttpError } from "@/lib/http-error";
 import { requireAuth } from "@/middleware/auth-middleware";
 import { errorHandler } from "@/middleware/error-handler";
 import { authRoutes } from "@/routes/auth-routes";
+import { meRoutes } from "@/routes/me-routes";
 import { reservationRoutes } from "@/routes/reservation-routes";
 
 const app = express();
@@ -69,6 +70,7 @@ if (env.NODE_ENV !== "production") {
 }
 
 app.use("/api/auth", authRoutes);
+app.use("/api/me", requireAuth, meRoutes);
 app.use("/api/reservations", requireAuth, reservationRoutes);
 
 app.use(errorHandler);

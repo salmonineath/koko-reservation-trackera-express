@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "@/config/database";
 import { env } from "@/config/env";
+import { toUserDto, type UserDto } from "@/dtos/user-dto";
 import { HttpError } from "@/lib/http-error";
 import type { LoginInput } from "@/schemas/auth-schema";
 
@@ -16,7 +17,7 @@ export interface AuthTokenPayload {
 interface AuthResult {
   accessToken: string;
   refreshToken: string;
-  user: { id: number; email: string; createdAt: Date };
+  user: UserDto;
 }
 
 const signAccessToken = (payload: AuthTokenPayload): string => {
@@ -40,11 +41,7 @@ const issueRefreshToken = async (userId: number): Promise<string> => {
   return raw;
 };
 
-const issueTokenPair = async (user: {
-  id: number;
-  email: string;
-  createdAt: Date;
-}): Promise<AuthResult> => {
+const issueTokenPair = async (user: UserDto): Promise<AuthResult> => {
   const [accessToken, refreshToken] = await Promise.all([
     signAccessToken({ sub: user.id, email: user.email }),
     issueRefreshToken(user.id),
@@ -67,7 +64,7 @@ export const login = async (input: LoginInput): Promise<AuthResult> => {
     throw new HttpError(401, "Invalid email or password");
   }
 
-  return issueTokenPair({ id: user.id, email: user.email, createdAt: user.createdAt });
+  return issueTokenPair(toUserDto(user));
 };
 
 // Rotation: every refresh consumes the presented token (revokes it) and issues a
@@ -107,6 +104,7 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
     throw new HttpError(401, "Invalid refresh token");
   }
 
+  const userDto = toUserDto(user);
   const newRawToken = randomBytes(REFRESH_TOKEN_BYTES).toString("hex");
   const newExpiresAt = new Date(Date.now() + env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
 
@@ -121,7 +119,7 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
   ]);
 
   const accessToken = signAccessToken({ sub: user.id, email: user.email });
-  return { accessToken, refreshToken: newRawToken, user };
+  return { accessToken, refreshToken: newRawToken, user: userDto };
 };
 
 // Idempotent on purpose - logging out with an already-revoked/unknown token
