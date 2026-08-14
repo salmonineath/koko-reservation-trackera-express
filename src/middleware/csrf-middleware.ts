@@ -7,7 +7,7 @@ import { HttpError } from "@/lib/http-error";
 const CSRF_HEADER = "x-requested-with";
 const CSRF_HEADER_VALUE = "XMLHttpRequest";
 
-export const requireCsrfHeader = (req: Request, res: Response, next: NextFunction): void => {
+export const requireCsrfHeader = (req: Request, _res: Response, next: NextFunction): void => {
   if (req.headers[CSRF_HEADER] !== CSRF_HEADER_VALUE) {
     next(new HttpError(403, "Missing or invalid CSRF header"));
     return;
