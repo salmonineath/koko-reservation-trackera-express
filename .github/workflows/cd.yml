@@ -1,0 +1,51 @@
+name: CD
+
+# Runs after CI finishes on main, and only proceeds if CI actually passed -
+# this is what stops a broken push from reaching Render. workflow_run (not
+# push) is deliberate: it lets us gate on the *result* of the CI workflow
+# rather than duplicating its checks here.
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+# Only one deploy in flight at a time; a newer main push supersedes an
+# in-progress older one instead of racing it.
+concurrency:
+  group: cd-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Migrate + deploy
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the exact commit CI just verified, not whatever main moved
+      # to since - workflow_run defaults to the default branch tip otherwise.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Applies any pending migrations to the real deploy DB before the new
+      # code goes live - prisma migrate deploy is non-interactive by design,
+      # safe for CI/CD (unlike `migrate dev`). DATABASE_URL here is the actual
+      # deploy database, set as a repo secret - not the fake one CI uses.
+      - name: Run database migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Render's git auto-deploy is intentionally NOT relied on here - it has
+      # no way to wait for migrations or for CI to pass first. This hook
+      # triggers the actual deploy only once both of those are done.
+      - name: Trigger Render deploy
+        run: curl -fsS -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
