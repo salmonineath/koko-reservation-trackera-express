@@ -1,5 +1,5 @@
-import { PrismaClient } from "../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../generated/prisma/client";
 
 // Reuse a single PrismaClient (and its underlying pg pool) across hot reloads
 // (tsx watch), otherwise every file save opens a new connection pool against Postgres.

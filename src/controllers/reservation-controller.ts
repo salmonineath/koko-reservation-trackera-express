@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import { HttpError } from "@/lib/http-error";
 import {
   createReservationSchema,
+  dashboardStatsQuerySchema,
   listReservationsQuerySchema,
   updateReservationSchema,
 } from "@/schemas/reservation-schema";
@@ -67,6 +68,16 @@ export const remove = async (req: Request, res: Response, next: NextFunction) =>
     const id = parseId(req.params.id);
     await reservationService.deleteReservation(id);
     res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getStats = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const query = dashboardStatsQuerySchema.parse(req.query);
+    const stats = await reservationService.getDashboardStats(query);
+    res.json(stats);
   } catch (error) {
     next(error);
   }

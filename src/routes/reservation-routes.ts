@@ -77,6 +77,33 @@ reservationRoutes.get("/", reservationController.list);
 
 /**
  * @openapi
+ * /reservations/stats:
+ *   get:
+ *     summary: Dashboard KPI cards + donuts (reservation counts/guests, this month vs last)
+ *     description: >
+ *       Reservation-derived stats only - deliberately excludes trend/time-series
+ *       data and anything social-media/content related (out of scope this
+ *       release, see doc/DASHBOARD_SCOPE_REVIEW.md).
+ *     tags: [Reservations]
+ *     parameters:
+ *       - in: query
+ *         name: month
+ *         schema: { type: string, example: "2026-05" }
+ *         description: YYYY-MM. Defaults to the current calendar month.
+ *     responses:
+ *       200:
+ *         description: Dashboard stats for the requested month vs the previous month
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DashboardStats'
+ *       400:
+ *         description: Validation failed (bad month format)
+ */
+reservationRoutes.get("/stats", reservationController.getStats);
+
+/**
+ * @openapi
  * /reservations/{id}:
  *   get:
  *     summary: Get a reservation by id

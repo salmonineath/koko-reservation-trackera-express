@@ -21,7 +21,8 @@ const options: swaggerJsdoc.Options = {
           type: "http",
           scheme: "bearer",
           bearerFormat: "JWT",
-          description: "Paste the token returned from POST /auth/login (no 'Bearer ' prefix needed here).",
+          description:
+            "Paste the token returned from POST /auth/login (no 'Bearer ' prefix needed here).",
         },
       },
       schemas: {
@@ -41,7 +42,8 @@ const options: swaggerJsdoc.Options = {
           properties: {
             accessToken: {
               type: "string",
-              description: "Short-lived JWT (see ACCESS_TOKEN_EXPIRES_IN). Send as 'Authorization: Bearer <accessToken>'.",
+              description:
+                "Short-lived JWT (see ACCESS_TOKEN_EXPIRES_IN). Send as 'Authorization: Bearer <accessToken>'.",
               example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             },
             user: {
@@ -108,11 +110,66 @@ const options: swaggerJsdoc.Options = {
             totalPages: { type: "integer", example: 1 },
           },
         },
+        DashboardStatCard: {
+          type: "object",
+          description:
+            "null deltaPercent means there's no previous-period baseline to compare against.",
+          properties: {
+            current: { type: "integer", example: 128 },
+            previous: { type: "integer", example: 156 },
+            deltaPercent: { type: "integer", nullable: true, example: -18 },
+          },
+        },
+        DashboardStats: {
+          type: "object",
+          properties: {
+            period: {
+              type: "object",
+              properties: {
+                month: { type: "string", example: "2026-05" },
+                from: { type: "string", format: "date-time" },
+                to: { type: "string", format: "date-time" },
+              },
+            },
+            totals: {
+              type: "object",
+              properties: {
+                reservations: { $ref: "#/components/schemas/DashboardStatCard" },
+                completed: { $ref: "#/components/schemas/DashboardStatCard" },
+                cancelled: { $ref: "#/components/schemas/DashboardStatCard" },
+                guests: { $ref: "#/components/schemas/DashboardStatCard" },
+              },
+            },
+            bySource: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  source: { $ref: "#/components/schemas/ReservationSource" },
+                  count: { type: "integer", example: 45 },
+                },
+              },
+            },
+            byStatus: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  status: { $ref: "#/components/schemas/ReservationStatus" },
+                  count: { type: "integer", example: 96 },
+                },
+              },
+            },
+          },
+        },
         ValidationError: {
           type: "object",
           properties: {
             error: { type: "string", example: "Validation failed" },
-            details: { type: "object", additionalProperties: { type: "array", items: { type: "string" } } },
+            details: {
+              type: "object",
+              additionalProperties: { type: "array", items: { type: "string" } },
+            },
           },
         },
       },

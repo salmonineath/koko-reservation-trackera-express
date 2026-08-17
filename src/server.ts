@@ -10,6 +10,7 @@ import { HttpError } from "@/lib/http-error";
 import { requireAuth } from "@/middleware/auth-middleware";
 import { errorHandler } from "@/middleware/error-handler";
 import { authRoutes } from "@/routes/auth-routes";
+import { meRoutes } from "@/routes/me-routes";
 import { reservationRoutes } from "@/routes/reservation-routes";
 
 const app = express();
@@ -60,10 +61,16 @@ app.get("/", (_req, res) => {
 // disabled for this route only (not globally) because helmet's default CSP
 // blocks the inline scripts swagger-ui-express relies on to render.
 if (env.NODE_ENV !== "production") {
-  app.use("/api-docs", helmet({ contentSecurityPolicy: false }), swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  app.use(
+    "/api-docs",
+    helmet({ contentSecurityPolicy: false }),
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec),
+  );
 }
 
 app.use("/api/auth", authRoutes);
+app.use("/api/me", requireAuth, meRoutes);
 app.use("/api/reservations", requireAuth, reservationRoutes);
 
 app.use(errorHandler);
