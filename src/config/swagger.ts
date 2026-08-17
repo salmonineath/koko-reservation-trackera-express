@@ -1,7 +1,7 @@
 import swaggerJsdoc from "swagger-jsdoc";
 
-// Spec is generated from @openapi JSDoc blocks in src/routes/**, not hand-maintained
-// separately — add a block next to each new route (Social Media, Content, ...) and it
+// Spec is generated from @openapi JSDoc blocks in each module's *.routes.ts,
+// not hand-maintained separately — add a block next to each new route and it
 // shows up here automatically, so the docs can't silently drift from the code.
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -166,7 +166,7 @@ const options: swaggerJsdoc.Options = {
       },
     },
   },
-  apis: ["./src/routes/*.ts"],
+  apis: ["./src/modules/**/*.routes.ts"],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);

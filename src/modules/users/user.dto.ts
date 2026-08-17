@@ -1,6 +1,7 @@
-// Explicit response shape for a User. Listed field-by-field so it's obvious
-// at a glance what leaves the API - most importantly, that passwordHash never
-// does. Adding a column to schema.prisma never silently exposes it here.
+// Output DTO - explicit response shape for a User. Listed field-by-field so
+// it's obvious at a glance what leaves the API - most importantly, that
+// passwordHash never does. Adding a column to schema.prisma never silently
+// exposes it here.
 export type UserDto = {
   id: number;
   email: string;

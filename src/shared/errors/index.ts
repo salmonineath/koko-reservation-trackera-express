@@ -1,0 +1,7 @@
+// Barrel so callers can do `import { NotFoundError } from "@/shared/errors"`
+// instead of reaching into individual files.
+export * from "./app-error";
+export * from "./forbidden-error";
+export * from "./not-found-error";
+export * from "./unauthorized-error";
+export * from "./validation-error";

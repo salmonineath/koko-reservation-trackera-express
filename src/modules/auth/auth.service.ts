@@ -1,24 +1,14 @@
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { prisma } from "@/config/database";
 import { env } from "@/config/env";
-import { toUserDto, type UserDto } from "@/dtos/user-dto";
-import { HttpError } from "@/lib/http-error";
-import type { LoginInput } from "@/schemas/auth-schema";
+import { prisma } from "@/lib/prisma";
+import { toUserDto, type UserDto } from "@/modules/users/user.dto";
+import { UnauthorizedError } from "@/shared/errors";
+import type { LoginDto } from "./auth.dto";
+import type { AuthResult, AuthTokenPayload } from "./auth.types";
 
 const REFRESH_TOKEN_BYTES = 40;
-
-export interface AuthTokenPayload {
-  sub: number;
-  email: string;
-}
-
-interface AuthResult {
-  accessToken: string;
-  refreshToken: string;
-  user: UserDto;
-}
 
 const signAccessToken = (payload: AuthTokenPayload): string => {
   return jwt.sign(payload, env.JWT_SECRET, {
@@ -53,15 +43,15 @@ const issueTokenPair = async (user: UserDto): Promise<AuthResult> => {
 // There is no self-service registration - accounts are provisioned only via
 // `npm run db:seed` (see src/script/seed.ts). Any number of accounts can exist;
 // this just authenticates whichever ones already do.
-export const login = async (input: LoginInput): Promise<AuthResult> => {
-  const user = await prisma.user.findUnique({ where: { email: input.email } });
+export const login = async (dto: LoginDto): Promise<AuthResult> => {
+  const user = await prisma.user.findUnique({ where: { email: dto.email } });
   if (!user) {
-    throw new HttpError(401, "Invalid email or password");
+    throw new UnauthorizedError("Invalid email or password");
   }
 
-  const passwordMatches = await bcrypt.compare(input.password, user.passwordHash);
+  const passwordMatches = await bcrypt.compare(dto.password, user.passwordHash);
   if (!passwordMatches) {
-    throw new HttpError(401, "Invalid email or password");
+    throw new UnauthorizedError("Invalid email or password");
   }
 
   return issueTokenPair(toUserDto(user));
@@ -78,7 +68,7 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
   const existing = await prisma.refreshToken.findUnique({ where: { tokenHash } });
 
   if (!existing) {
-    throw new HttpError(401, "Invalid refresh token");
+    throw new UnauthorizedError("Invalid refresh token");
   }
 
   if (existing.revokedAt) {
@@ -86,14 +76,13 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
       where: { userId: existing.userId, revokedAt: null },
       data: { revokedAt: new Date() },
     });
-    throw new HttpError(
-      401,
+    throw new UnauthorizedError(
       "Refresh token reuse detected - all sessions revoked, please log in again",
     );
   }
 
   if (existing.expiresAt < new Date()) {
-    throw new HttpError(401, "Refresh token expired, please log in again");
+    throw new UnauthorizedError("Refresh token expired, please log in again");
   }
 
   const user = await prisma.user.findUnique({
@@ -101,7 +90,7 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
     select: { id: true, email: true, createdAt: true },
   });
   if (!user) {
-    throw new HttpError(401, "Invalid refresh token");
+    throw new UnauthorizedError("Invalid refresh token");
   }
 
   const userDto = toUserDto(user);

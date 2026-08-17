@@ -3,7 +3,6 @@ dist/
 .env
 backups/
 doc/
-script/
 .claude/
 
 /src/generated/prisma

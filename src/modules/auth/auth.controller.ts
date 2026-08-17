@@ -1,9 +1,10 @@
 import type { CookieOptions, NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { env } from "@/config/env";
-import { HttpError } from "@/lib/http-error";
-import { loginSchema } from "@/schemas/auth-schema";
-import * as authService from "@/services/auth-service";
+import { UnauthorizedError } from "@/shared/errors";
+import type { LoginDto } from "./auth.dto";
+import { loginSchema } from "./auth.schema";
+import { login, logout, refresh } from "./auth.service";
 
 // Refresh token lives in an HttpOnly cookie - never in a JSON body - so
 // frontend JS can never read it (mitigates XSS stealing it). Scoped to the
@@ -13,7 +14,7 @@ const REFRESH_COOKIE_PATH = "/api/auth";
 
 // Access token also lives in an HttpOnly cookie so requireAuth can read it
 // without the frontend having to hold it in memory and attach it manually
-// (see src/middleware/auth-middleware.ts). Still returned in the JSON body
+// (see src/middleware/auth.middleware.ts). Still returned in the JSON body
 // too, for API clients that prefer the Authorization header. Scoped to "/"
 // since, unlike the refresh token, it's needed on every /api/* route.
 const ACCESS_COOKIE_NAME = "accessToken";
@@ -66,10 +67,10 @@ const clearAccessCookie = (res: Response): void => {
   res.clearCookie(ACCESS_COOKIE_NAME, { path: "/" });
 };
 
-export const login = async (req: Request, res: Response, next: NextFunction) => {
+export const loginController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const input = loginSchema.parse(req.body);
-    const { accessToken, refreshToken, user } = await authService.login(input);
+    const dto: LoginDto = loginSchema.parse(req.body);
+    const { accessToken, refreshToken, user } = await login(dto);
     setRefreshCookie(res, refreshToken);
     setAccessCookie(res, accessToken);
     res.json({ accessToken, user });
@@ -78,14 +79,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
   }
 };
 
-export const refresh = async (req: Request, res: Response, next: NextFunction) => {
+export const refreshController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
     if (!rawRefreshToken) {
-      throw new HttpError(401, "Missing refresh token");
+      throw new UnauthorizedError("Missing refresh token");
     }
 
-    const { accessToken, refreshToken, user } = await authService.refresh(rawRefreshToken);
+    const { accessToken, refreshToken, user } = await refresh(rawRefreshToken);
     setRefreshCookie(res, refreshToken);
     setAccessCookie(res, accessToken);
     res.json({ accessToken, user });
@@ -93,7 +94,7 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
     // Any rejected refresh (missing/invalid/expired/reused) leaves the client
     // holding a cookie that will never work again - clear it so the browser
     // stops sending a dead token on every subsequent request.
-    if (error instanceof HttpError && error.statusCode === 401) {
+    if (error instanceof UnauthorizedError) {
       clearRefreshCookie(res);
       clearAccessCookie(res);
     }
@@ -101,11 +102,11 @@ export const refresh = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
-export const logout = async (req: Request, res: Response, next: NextFunction) => {
+export const logoutController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const rawRefreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
     if (rawRefreshToken) {
-      await authService.logout(rawRefreshToken);
+      await logout(rawRefreshToken);
     }
     clearRefreshCookie(res);
     clearAccessCookie(res);

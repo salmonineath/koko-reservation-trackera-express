@@ -1,7 +1,7 @@
 import { Router } from "express";
-import * as meController from "@/controllers/me-controller";
+import { getMeController } from "./user.controller";
 
-export const meRoutes = Router();
+export const userRoutes = Router();
 
 /**
  * @openapi
@@ -28,4 +28,4 @@ export const meRoutes = Router();
  *       404:
  *         description: Token valid but the user no longer exists
  */
-meRoutes.get("/", meController.getMe);
+userRoutes.get("/", getMeController);
