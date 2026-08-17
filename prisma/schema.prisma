@@ -47,12 +47,25 @@ model Reservation {
   @@index([source])
 }
 
+// Display-only profile fields: fullName/username/role are shown on the
+// authenticated user's own profile (GET /api/me) but don't gate anything -
+// there's still no permission model (see doc/FRONTEND_API_SCOPE.md). All
+// three are optional since they're not collected anywhere yet - only email +
+// password are required to provision an account (see src/script/seed.ts).
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
   passwordHash String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  fullName     String?
+  username     String?   @unique
+  role         UserRole?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   refreshTokens RefreshToken[]
 }

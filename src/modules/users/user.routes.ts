@@ -17,12 +17,7 @@ export const userRoutes = Router();
  *             schema:
  *               type: object
  *               properties:
- *                 user:
- *                   type: object
- *                   properties:
- *                     id: { type: integer, example: 1 }
- *                     email: { type: string, example: "you@example.com" }
- *                     createdAt: { type: string, format: date-time }
+ *                 user: { $ref: '#/components/schemas/AuthUser' }
  *       401:
  *         description: Missing or invalid access token
  *       404:

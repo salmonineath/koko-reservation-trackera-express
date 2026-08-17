@@ -87,7 +87,7 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
 
   const user = await prisma.user.findUnique({
     where: { id: existing.userId },
-    select: { id: true, email: true, createdAt: true },
+    select: { id: true, email: true, fullName: true, username: true, role: true, createdAt: true },
   });
   if (!user) {
     throw new UnauthorizedError("Invalid refresh token");

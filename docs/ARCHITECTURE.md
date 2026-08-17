@@ -371,10 +371,14 @@ order, is also the order you *implement* a new endpoint in, top to bottom.
   rotation/reuse-detection, and the auth cookies. No self-service
   registration; accounts are provisioned by `src/script/seed.ts`.
 - **`users/`** — currently just `GET /api/me` (the logged-in user's own
-  profile). Mounted at `/api/me`, not `/api/users`, because that's the actual
-  route this app exposes today — see [Do not change API contracts
-  unnecessarily](#a-note-on-api-contracts). Add real user management here
-  (list/create/deactivate users, etc.) if that's ever needed.
+  profile: `id`, `email`, `fullName`, `username`, `role`, `createdAt`).
+  Mounted at `/api/me`, not `/api/users`, because that's the actual route
+  this app exposes today — see [Do not change API contracts
+  unnecessarily](#a-note-on-api-contracts). `fullName`/`username`/`role` are
+  **display-only** - they're stored and returned, but nothing checks `role`
+  to gate access; there's still no permission model (see
+  `doc/FRONTEND_API_SCOPE.md`). Add real user management here (list/create/
+  deactivate users, etc.) if that's ever needed.
 - **`reservations/`** — CRUD + the `/stats` dashboard endpoint (KPI
   cards/donuts for the current vs. previous month).
 
@@ -387,3 +391,9 @@ observable difference: reservation lookups by id (`GET`/`PATCH`/`DELETE
 `NotFoundError` path instead of one of them (`GET`) hand-writing
 `res.status(404)` while the others fell through to a generic Prisma-error
 branch. The response body and status code are identical either way.
+
+`GET /api/me` and the `user` object in `POST /api/auth/login` /
+`POST /api/auth/refresh` responses now additionally include `fullName`,
+`username`, and `role` (all nullable) - a deliberate, requested contract
+addition, not an oversight. `doc/FRONTEND_MOCK_DATA_SCHEMA.md`'s `AuthUser`
+interface has been updated to match.
