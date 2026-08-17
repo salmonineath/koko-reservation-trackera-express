@@ -73,16 +73,7 @@ const options: swaggerJsdoc.Options = {
         },
         ReservationSource: {
           type: "string",
-          enum: [
-            "FACEBOOK",
-            "INSTAGRAM",
-            "TIKTOK",
-            "PHONE_CALL",
-            "WALK_IN",
-            "INFLUENCER",
-            "RETURNING_CUSTOMER",
-            "UNKNOWN",
-          ],
+          enum: ["FACEBOOK", "INSTAGRAM", "TIKTOK", "TELEGRAM"],
         },
         ReservationStatus: {
           type: "string",

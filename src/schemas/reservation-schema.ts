@@ -1,16 +1,7 @@
 import { z } from "zod";
 
 // Keep these in sync with prisma/schema.prisma's ReservationSource/ReservationStatus enums.
-export const reservationSourceValues = [
-  "FACEBOOK",
-  "INSTAGRAM",
-  "TIKTOK",
-  "PHONE_CALL",
-  "WALK_IN",
-  "INFLUENCER",
-  "RETURNING_CUSTOMER",
-  "UNKNOWN",
-] as const;
+export const reservationSourceValues = ["FACEBOOK", "INSTAGRAM", "TIKTOK", "TELEGRAM"] as const;
 
 export const reservationStatusValues = ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"] as const;
 

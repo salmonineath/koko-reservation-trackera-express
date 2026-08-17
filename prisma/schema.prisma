@@ -18,11 +18,7 @@ enum ReservationSource {
   FACEBOOK
   INSTAGRAM
   TIKTOK
-  PHONE_CALL
-  WALK_IN
-  INFLUENCER
-  RETURNING_CUSTOMER
-  UNKNOWN
+  TELEGRAM
 }
 
 enum ReservationStatus {
