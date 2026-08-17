@@ -4,7 +4,9 @@ Backend API for tracking KOKO Steakhouse reservations — built to replace manua
 spreadsheet tracking with a single system that records where a reservation came
 from, how many there were, and their status. See
 [`doc/`](doc) for the full product scope; the status of what's actually built
-vs. planned is tracked at the top of that doc.
+vs. planned is tracked at the top of that doc. See
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for how the codebase is
+organized and where to start when adding a feature.
 
 ## Tech stack
 

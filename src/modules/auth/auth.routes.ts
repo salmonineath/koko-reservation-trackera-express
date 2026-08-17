@@ -1,6 +1,6 @@
 import { Router } from "express";
-import * as authController from "@/controllers/auth-controller";
-import { loginRateLimiter, refreshRateLimiter } from "@/middleware/rate-limit";
+import { loginRateLimiter, refreshRateLimiter } from "@/middleware/rate-limit.middleware";
+import { loginController, logoutController, refreshController } from "./auth.controller";
 
 export const authRoutes = Router();
 
@@ -31,7 +31,7 @@ export const authRoutes = Router();
  *       429:
  *         description: Too many login attempts
  */
-authRoutes.post("/login", loginRateLimiter, authController.login);
+authRoutes.post("/login", loginRateLimiter, loginController);
 
 /**
  * @openapi
@@ -63,7 +63,7 @@ authRoutes.post("/login", loginRateLimiter, authController.login);
  *       429:
  *         description: Too many refresh attempts
  */
-authRoutes.post("/refresh", refreshRateLimiter, authController.refresh);
+authRoutes.post("/refresh", refreshRateLimiter, refreshController);
 
 /**
  * @openapi
@@ -82,4 +82,4 @@ authRoutes.post("/refresh", refreshRateLimiter, authController.refresh);
  *       204:
  *         description: Token revoked and cookie cleared (or was already invalid/absent - still succeeds)
  */
-authRoutes.post("/logout", authController.logout);
+authRoutes.post("/logout", logoutController);

@@ -1,23 +1,24 @@
-import { prisma } from "@/config/database";
-import { toReservationDto, toReservationDtoList } from "@/dtos/reservation-dto";
+import { prisma } from "@/lib/prisma";
+import { NotFoundError } from "@/shared/errors";
 import type {
-  CreateReservationInput,
-  DashboardStatsQuery,
-  ListReservationsQuery,
-  UpdateReservationInput,
-} from "@/schemas/reservation-schema";
+  CreateReservationDto,
+  DashboardStatsDto,
+  ListReservationsDto,
+  ReservationDto,
+  UpdateReservationDto,
+} from "./reservation.dto";
+import { toReservationDto, toReservationDtoList } from "./reservation.dto";
+import type { DashboardStatsResult, StatCard } from "./reservation.types";
 
-export const createReservation = async (input: CreateReservationInput) => {
-  const reservation = await prisma.reservation.create({
-    data: input,
-  });
+export const createReservation = async (dto: CreateReservationDto): Promise<ReservationDto> => {
+  const reservation = await prisma.reservation.create({ data: dto });
   return toReservationDto(reservation);
 };
 
-export const listReservations = async (query: ListReservationsQuery) => {
-  const { search, source, status, dateFrom, dateTo, page, limit } = query;
+const buildReservationWhere = (dto: ListReservationsDto) => {
+  const { search, source, status, dateFrom, dateTo } = dto;
 
-  const where = {
+  return {
     ...(source && { source }),
     ...(status && { status }),
     ...((dateFrom || dateTo) && {
@@ -33,6 +34,18 @@ export const listReservations = async (query: ListReservationsQuery) => {
       ],
     }),
   };
+};
+
+const buildPagination = (page: number, limit: number, total: number) => ({
+  page,
+  limit,
+  total,
+  totalPages: Math.max(1, Math.ceil(total / limit)),
+});
+
+export const listReservations = async (dto: ListReservationsDto) => {
+  const { page, limit } = dto;
+  const where = buildReservationWhere(dto);
 
   const [data, total] = await Promise.all([
     prisma.reservation.findMany({
@@ -46,32 +59,39 @@ export const listReservations = async (query: ListReservationsQuery) => {
 
   return {
     data: toReservationDtoList(data),
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.max(1, Math.ceil(total / limit)),
-    },
+    pagination: buildPagination(page, limit, total),
   };
 };
 
-export const getReservationById = async (id: number) => {
+const getReservationOrThrow = async (id: number) => {
   const reservation = await prisma.reservation.findUnique({ where: { id } });
-  return reservation ? toReservationDto(reservation) : null;
+  if (!reservation) {
+    throw new NotFoundError("Reservation not found");
+  }
+  return reservation;
 };
 
-export const updateReservation = async (id: number, input: UpdateReservationInput) => {
+export const getReservationById = async (id: number): Promise<ReservationDto> => {
+  return toReservationDto(await getReservationOrThrow(id));
+};
+
+export const updateReservation = async (dto: UpdateReservationDto): Promise<ReservationDto> => {
+  await getReservationOrThrow(dto.id);
+
   const reservation = await prisma.reservation.update({
-    where: { id },
-    data: input,
+    where: { id: dto.id },
+    data: dto.changes,
   });
   return toReservationDto(reservation);
 };
 
-export const deleteReservation = async (id: number) => {
-  return prisma.reservation.delete({ where: { id } });
+export const deleteReservation = async (id: number): Promise<void> => {
+  await getReservationOrThrow(id);
+  await prisma.reservation.delete({ where: { id } });
 };
 
+// --- Dashboard stats ---------------------------------------------------
+//
 // Dashboard KPI cards/donuts only (see doc/DASHBOARD_SCOPE_REVIEW.md) -
 // deliberately excludes trend/time-series and anything social-media/content
 // related, since those are out of scope for this release regardless of
@@ -121,8 +141,14 @@ const percentDelta = (current: number, previous: number): number | null => {
   return Math.round(((current - previous) / previous) * 100);
 };
 
-export const getDashboardStats = async (query: DashboardStatsQuery) => {
-  const { from, to, prevFrom, prevTo } = monthBounds(query.month);
+const buildStatCard = (current: number, previous: number): StatCard => ({
+  current,
+  previous,
+  deltaPercent: percentDelta(current, previous),
+});
+
+export const getDashboardStats = async (dto: DashboardStatsDto): Promise<DashboardStatsResult> => {
+  const { from, to, prevFrom, prevTo } = monthBounds(dto.month);
 
   const [current, previous, sourceGroups] = await Promise.all([
     getPeriodAggregates(from, to),
@@ -144,21 +170,9 @@ export const getDashboardStats = async (query: DashboardStatsQuery) => {
       to,
     },
     totals: {
-      reservations: {
-        current: current.total,
-        previous: previous.total,
-        deltaPercent: percentDelta(current.total, previous.total),
-      },
-      cancelled: {
-        current: currentCancelled,
-        previous: previousCancelled,
-        deltaPercent: percentDelta(currentCancelled, previousCancelled),
-      },
-      guests: {
-        current: current.guests,
-        previous: previous.guests,
-        deltaPercent: percentDelta(current.guests, previous.guests),
-      },
+      reservations: buildStatCard(current.total, previous.total),
+      cancelled: buildStatCard(currentCancelled, previousCancelled),
+      guests: buildStatCard(current.guests, previous.guests),
     },
     bySource: sourceGroups.map((row) => ({ source: row.source, count: row._count })),
     byStatus: current.statusCounts,

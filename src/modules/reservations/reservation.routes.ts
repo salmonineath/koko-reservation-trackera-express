@@ -1,5 +1,12 @@
 import { Router } from "express";
-import * as reservationController from "@/controllers/reservation-controller";
+import {
+  createReservationController,
+  deleteReservationController,
+  getReservationByIdController,
+  getReservationStatsController,
+  listReservationsController,
+  updateReservationController,
+} from "./reservation.controller";
 
 export const reservationRoutes = Router();
 
@@ -29,7 +36,7 @@ export const reservationRoutes = Router();
  *             schema:
  *               $ref: '#/components/schemas/ValidationError'
  */
-reservationRoutes.post("/", reservationController.create);
+reservationRoutes.post("/", createReservationController);
 
 /**
  * @openapi
@@ -73,7 +80,7 @@ reservationRoutes.post("/", reservationController.create);
  *                   items: { $ref: '#/components/schemas/Reservation' }
  *                 pagination: { $ref: '#/components/schemas/Pagination' }
  */
-reservationRoutes.get("/", reservationController.list);
+reservationRoutes.get("/", listReservationsController);
 
 /**
  * @openapi
@@ -100,7 +107,7 @@ reservationRoutes.get("/", reservationController.list);
  *       400:
  *         description: Validation failed (bad month format)
  */
-reservationRoutes.get("/stats", reservationController.getStats);
+reservationRoutes.get("/stats", getReservationStatsController);
 
 /**
  * @openapi
@@ -123,7 +130,7 @@ reservationRoutes.get("/stats", reservationController.getStats);
  *       404:
  *         description: Reservation not found
  */
-reservationRoutes.get("/:id", reservationController.getById);
+reservationRoutes.get("/:id", getReservationByIdController);
 
 /**
  * @openapi
@@ -154,7 +161,7 @@ reservationRoutes.get("/:id", reservationController.getById);
  *       404:
  *         description: Reservation not found
  */
-reservationRoutes.patch("/:id", reservationController.update);
+reservationRoutes.patch("/:id", updateReservationController);
 
 /**
  * @openapi
@@ -173,4 +180,4 @@ reservationRoutes.patch("/:id", reservationController.update);
  *       404:
  *         description: Reservation not found
  */
-reservationRoutes.delete("/:id", reservationController.remove);
+reservationRoutes.delete("/:id", deleteReservationController);

@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import { ZodError } from "zod";
 import { Prisma } from "@/generated/prisma/client";
-import { HttpError } from "@/lib/http-error";
+import { AppError } from "@/shared/errors";
 
 // Central error handler so controllers can just `throw`/`next(error)` instead of
 // each one re-implementing status-code mapping for validation and Prisma errors.
@@ -16,7 +16,7 @@ export const errorHandler = (
     return;
   }
 
-  if (error instanceof HttpError) {
+  if (error instanceof AppError) {
     res.status(error.statusCode).json({ error: error.message });
     return;
   }

@@ -1,7 +1,7 @@
 import { Router } from "express";
-import * as meController from "@/controllers/me-controller";
+import { getMeController } from "./user.controller";
 
-export const meRoutes = Router();
+export const userRoutes = Router();
 
 /**
  * @openapi
@@ -17,15 +17,10 @@ export const meRoutes = Router();
  *             schema:
  *               type: object
  *               properties:
- *                 user:
- *                   type: object
- *                   properties:
- *                     id: { type: integer, example: 1 }
- *                     email: { type: string, example: "you@example.com" }
- *                     createdAt: { type: string, format: date-time }
+ *                 user: { $ref: '#/components/schemas/AuthUser' }
  *       401:
  *         description: Missing or invalid access token
  *       404:
  *         description: Token valid but the user no longer exists
  */
-meRoutes.get("/", meController.getMe);
+userRoutes.get("/", getMeController);

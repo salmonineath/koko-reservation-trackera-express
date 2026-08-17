@@ -1,7 +1,7 @@
 import swaggerJsdoc from "swagger-jsdoc";
 
-// Spec is generated from @openapi JSDoc blocks in src/routes/**, not hand-maintained
-// separately — add a block next to each new route (Social Media, Content, ...) and it
+// Spec is generated from @openapi JSDoc blocks in each module's *.routes.ts,
+// not hand-maintained separately — add a block next to each new route and it
 // shows up here automatically, so the docs can't silently drift from the code.
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -34,6 +34,26 @@ const options: swaggerJsdoc.Options = {
             password: { type: "string", format: "password", example: "at-least-8-chars" },
           },
         },
+        AuthUser: {
+          type: "object",
+          description:
+            "fullName/username/role are display-only - null until set (see " +
+            "src/script/seed.ts) - and don't grant or restrict anything; there's " +
+            "still no permission model.",
+          properties: {
+            id: { type: "integer", example: 1 },
+            email: { type: "string", example: "you@example.com" },
+            fullName: { type: "string", nullable: true, example: "Jane Doe" },
+            username: { type: "string", nullable: true, example: "jane" },
+            role: {
+              type: "string",
+              nullable: true,
+              enum: ["ADMIN", "STAFF", null],
+              example: "ADMIN",
+            },
+            createdAt: { type: "string", format: "date-time" },
+          },
+        },
         AuthResponse: {
           type: "object",
           description:
@@ -46,14 +66,7 @@ const options: swaggerJsdoc.Options = {
                 "Short-lived JWT (see ACCESS_TOKEN_EXPIRES_IN). Send as 'Authorization: Bearer <accessToken>'.",
               example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             },
-            user: {
-              type: "object",
-              properties: {
-                id: { type: "integer", example: 1 },
-                email: { type: "string", example: "you@example.com" },
-                createdAt: { type: "string", format: "date-time" },
-              },
-            },
+            user: { $ref: "#/components/schemas/AuthUser" },
           },
         },
         Reservation: {
@@ -166,7 +179,7 @@ const options: swaggerJsdoc.Options = {
       },
     },
   },
-  apis: ["./src/routes/*.ts"],
+  apis: ["./src/modules/**/*.routes.ts"],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
