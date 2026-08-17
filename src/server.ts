@@ -1,6 +1,6 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import express from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import helmet from "helmet";
 import swaggerUi from "swagger-ui-express";
 import { connectDB } from "@/config/database";
@@ -8,6 +8,7 @@ import { env } from "@/config/env";
 import { swaggerSpec } from "@/config/swagger";
 import { HttpError } from "@/lib/http-error";
 import { requireAuth } from "@/middleware/auth-middleware";
+import { requireCsrfHeader } from "@/middleware/csrf-middleware";
 import { errorHandler } from "@/middleware/error-handler";
 import { authRoutes } from "@/routes/auth-routes";
 import { meRoutes } from "@/routes/me-routes";
@@ -69,9 +70,22 @@ if (env.NODE_ENV !== "production") {
   );
 }
 
+// requireAuth now also accepts the accessToken cookie (not just the
+// Authorization header) - see src/middleware/auth-middleware.ts. That cookie
+// rides along on any cross-site request automatically, so state-changing
+// requests are guarded by requireCsrfHeader first, to block forged requests
+// that can't set our custom header. GETs are read-only, so left unguarded.
+const requireCsrfForMutations = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.method === "GET") {
+    next();
+    return;
+  }
+  requireCsrfHeader(req, res, next);
+};
+
 app.use("/api/auth", authRoutes);
-app.use("/api/me", requireAuth, meRoutes);
-app.use("/api/reservations", requireAuth, reservationRoutes);
+app.use("/api/me", requireCsrfForMutations, requireAuth, meRoutes);
+app.use("/api/reservations", requireCsrfForMutations, requireAuth, reservationRoutes);
 
 app.use(errorHandler);
 

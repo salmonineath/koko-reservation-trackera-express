@@ -134,8 +134,6 @@ export const getDashboardStats = async (query: DashboardStatsQuery) => {
     }),
   ]);
 
-  const currentCompleted = countForStatus(current.statusCounts, "COMPLETED");
-  const previousCompleted = countForStatus(previous.statusCounts, "COMPLETED");
   const currentCancelled = countForStatus(current.statusCounts, "CANCELLED");
   const previousCancelled = countForStatus(previous.statusCounts, "CANCELLED");
 
@@ -150,11 +148,6 @@ export const getDashboardStats = async (query: DashboardStatsQuery) => {
         current: current.total,
         previous: previous.total,
         deltaPercent: percentDelta(current.total, previous.total),
-      },
-      completed: {
-        current: currentCompleted,
-        previous: previousCompleted,
-        deltaPercent: percentDelta(currentCompleted, previousCompleted),
       },
       cancelled: {
         current: currentCancelled,
