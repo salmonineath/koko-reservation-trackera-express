@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { NotFoundError } from "@/shared/errors";
 import type {
@@ -15,8 +16,25 @@ export const createReservation = async (dto: CreateReservationDto): Promise<Rese
   return toReservationDto(reservation);
 };
 
-const buildReservationWhere = (dto: ListReservationsDto) => {
-  const { search, source, status, dateFrom, dateTo } = dto;
+// `from`/`to` are plain calendar-day strings (YYYY-MM-DD, validated in
+// reservation.schema.ts) but createdAt is a full timestamp, so they're
+// expanded here to the first/last instant of that UTC calendar day - entirely
+// from the caller's own values, never a hardcoded date.
+const buildCreatedAtRange = (
+  from?: string,
+  to?: string,
+): Prisma.DateTimeFilter<"Reservation"> | undefined => {
+  if (!from && !to) return undefined;
+
+  return {
+    ...(from && { gte: new Date(`${from}T00:00:00.000Z`) }),
+    ...(to && { lte: new Date(`${to}T23:59:59.999Z`) }),
+  };
+};
+
+const buildReservationWhere = (dto: ListReservationsDto): Prisma.ReservationWhereInput => {
+  const { search, source, status, dateFrom, dateTo, from, to } = dto;
+  const createdAt = buildCreatedAtRange(from, to);
 
   return {
     ...(source && { source }),
@@ -27,6 +45,7 @@ const buildReservationWhere = (dto: ListReservationsDto) => {
         ...(dateTo && { lte: dateTo }),
       },
     }),
+    ...(createdAt && { createdAt }),
     ...(search && {
       OR: [
         { customerName: { contains: search, mode: "insensitive" as const } },

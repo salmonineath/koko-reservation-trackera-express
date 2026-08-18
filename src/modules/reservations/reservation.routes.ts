@@ -62,6 +62,20 @@ reservationRoutes.post("/", createReservationController);
  *         name: dateTo
  *         schema: { type: string, format: date-time }
  *       - in: query
+ *         name: from
+ *         schema: { type: string, format: date, example: "2026-08-12" }
+ *         description: >
+ *           Filters by createdAt (record creation date), not the reservation's
+ *           own date - see dateFrom above for that. YYYY-MM-DD, inclusive,
+ *           expanded to the start of that UTC calendar day.
+ *       - in: query
+ *         name: to
+ *         schema: { type: string, format: date, example: "2026-08-18" }
+ *         description: >
+ *           Filters by createdAt (record creation date), not the reservation's
+ *           own date - see dateTo above for that. YYYY-MM-DD, inclusive,
+ *           expanded to the end of that UTC calendar day.
+ *       - in: query
  *         name: page
  *         schema: { type: integer, default: 1 }
  *       - in: query
@@ -79,6 +93,12 @@ reservationRoutes.post("/", createReservationController);
  *                   type: array
  *                   items: { $ref: '#/components/schemas/Reservation' }
  *                 pagination: { $ref: '#/components/schemas/Pagination' }
+ *       400:
+ *         description: Validation failed (e.g. bad from/to format, or from after to)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
  */
 reservationRoutes.get("/", listReservationsController);
 

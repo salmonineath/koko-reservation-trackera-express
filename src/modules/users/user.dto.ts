@@ -1,4 +1,17 @@
-import type { UserRole } from "@/generated/prisma/enums";
+import type { z } from "zod";
+import type { createUserSchema, listUsersQuerySchema, updateUserSchema } from "./user.schema";
+
+// --- Input DTOs: what each service operation needs -------------------------
+export type CreateUserDto = z.infer<typeof createUserSchema>;
+export type ListUsersDto = z.infer<typeof listUsersQuerySchema>;
+
+// Updating is different: the id comes from the route param, not the request
+// body, so the schema alone can't describe what the service needs - the DTO
+// has to combine both (mirrors reservation.dto.ts's UpdateReservationDto).
+export interface UpdateUserDto {
+  id: number;
+  changes: z.infer<typeof updateUserSchema>;
+}
 
 // Output DTO - explicit response shape for a User. Listed field-by-field so
 // it's obvious at a glance what leaves the API - most importantly, that
@@ -7,14 +20,15 @@ import type { UserRole } from "@/generated/prisma/enums";
 //
 // fullName/username/role are display-only profile fields - null until
 // someone sets them (see src/script/seed.ts's optional ADMIN_FULLNAME/
-// ADMIN_USERNAME/ADMIN_ROLE). role doesn't gate anything; there's still no
-// permission model (see doc/FRONTEND_API_SCOPE.md).
+// ADMIN_USERNAME/ADMIN_ROLE). role is a free-form string (not an enum) and
+// doesn't gate anything; there's still no permission model (see
+// doc/FRONTEND_API_SCOPE.md).
 export type UserDto = {
   id: number;
   email: string;
   fullName: string | null;
   username: string | null;
-  role: UserRole | null;
+  role: string | null;
   createdAt: Date;
 };
 
