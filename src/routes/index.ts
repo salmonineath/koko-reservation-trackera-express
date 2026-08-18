@@ -3,7 +3,7 @@ import { requireAuth } from "@/middleware/auth.middleware";
 import { requireCsrfForMutations } from "@/middleware/csrf.middleware";
 import { authRoutes } from "@/modules/auth/auth.routes";
 import { reservationRoutes } from "@/modules/reservations/reservation.routes";
-import { userRoutes } from "@/modules/users/user.routes";
+import { meRoutes, userRoutes } from "@/modules/users/user.routes";
 
 // Single place that answers "where is this endpoint mounted?" - each
 // module's own *.routes.ts only knows about paths relative to itself
@@ -18,5 +18,6 @@ apiRouter.use("/auth", authRoutes);
 // Every other route requires a valid access token, and CSRF-protects any
 // request that isn't a GET (state-changing requests can otherwise ride the
 // accessToken cookie on a forged cross-site request).
-apiRouter.use("/me", requireCsrfForMutations, requireAuth, userRoutes);
+apiRouter.use("/me", requireCsrfForMutations, requireAuth, meRoutes);
+apiRouter.use("/users", requireCsrfForMutations, requireAuth, userRoutes);
 apiRouter.use("/reservations", requireCsrfForMutations, requireAuth, reservationRoutes);

@@ -24,7 +24,6 @@ enum ReservationSource {
 enum ReservationStatus {
   PENDING
   CONFIRMED
-  COMPLETED
   CANCELLED
 }
 
@@ -47,43 +46,30 @@ model Reservation {
   @@index([source])
 }
 
-// Display-only profile fields: fullName/username/role are shown on the
-// authenticated user's own profile (GET /api/me) but don't gate anything -
-// there's still no permission model (see doc/FRONTEND_API_SCOPE.md). All
-// three are optional since they're not collected anywhere yet - only email +
-// password are required to provision an account (see src/script/seed.ts).
-enum UserRole {
-  ADMIN
-  STAFF
-}
-
 model User {
   id           Int       @id @default(autoincrement())
   email        String    @unique
   passwordHash String
   fullName     String?
   username     String?   @unique
-  role         UserRole?
+  role         String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  refreshTokens RefreshToken[]
+  refreshToken RefreshToken?
 }
 
-// Rotation model: each row is one issued refresh token. Only its SHA-256 hash is
-// stored (never the raw token) so a DB leak alone doesn't hand out usable tokens.
-// On every /auth/refresh call the matching row is revoked and a new row is
-// created - a still-valid, previously-revoked hash showing up again means the
-// token was stolen/reused, which is the trigger to revoke the whole family.
+// Rotation model: exactly one row per user. Only the token's SHA-256 hash is
+// stored (never the raw token) so a DB leak alone doesn't hand out usable
+// tokens. Every /auth/refresh call deletes this row and creates its
+// replacement in the same transaction, so the row is always the single
+// currently-valid refresh token - never a growing history. userId is unique
+// so the DB itself enforces the one-row-per-user invariant.
 model RefreshToken {
-  id                  Int       @id @default(autoincrement())
-  tokenHash           String    @unique
-  userId              Int
-  user                User      @relation(fields: [userId], references: [id])
-  expiresAt           DateTime
-  revokedAt           DateTime?
-  replacedByTokenHash String?
-  createdAt           DateTime  @default(now())
-
-  @@index([userId])
+  id         Int      @id @default(autoincrement())
+  tokenHash  String   @unique
+  userId     Int      @unique
+  user       User     @relation(fields: [userId], references: [id])
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
 }

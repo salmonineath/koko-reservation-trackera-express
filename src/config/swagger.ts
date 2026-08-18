@@ -54,6 +54,20 @@ const options: swaggerJsdoc.Options = {
             createdAt: { type: "string", format: "date-time" },
           },
         },
+        UserInput: {
+          type: "object",
+          description:
+            "Used for both create (password required) and update (all fields " +
+            "optional - only what's provided is changed; a provided password " +
+            "replaces the existing one, an omitted one leaves it untouched).",
+          properties: {
+            email: { type: "string", format: "email", example: "you@example.com" },
+            password: { type: "string", format: "password", example: "at-least-8-chars" },
+            fullName: { type: "string", example: "Jane Doe" },
+            username: { type: "string", example: "jane" },
+            role: { type: "string", nullable: true, example: "ADMIN" },
+          },
+        },
         AuthResponse: {
           type: "object",
           description:

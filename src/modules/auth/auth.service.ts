@@ -43,6 +43,10 @@ const issueTokenPair = async (user: UserDto): Promise<AuthResult> => {
 // There is no self-service registration - accounts are provisioned only via
 // `npm run db:seed` (see src/script/seed.ts). Any number of accounts can exist;
 // this just authenticates whichever ones already do.
+//
+// Self-healing: any refresh tokens already on file for this user are cleared
+// before issuing a fresh one, so exactly one row per user always survives even
+// if a previous session was never cleanly logged out.
 export const login = async (dto: LoginDto): Promise<AuthResult> => {
   const user = await prisma.user.findUnique({ where: { email: dto.email } });
   if (!user) {
@@ -54,15 +58,14 @@ export const login = async (dto: LoginDto): Promise<AuthResult> => {
     throw new UnauthorizedError("Invalid email or password");
   }
 
+  await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
+
   return issueTokenPair(toUserDto(user));
 };
 
-// Rotation: every refresh consumes the presented token (revokes it) and issues a
-// brand-new one. A presented token that is *already* revoked means it was used
-// twice - the first legitimate use already rotated it away, so this second
-// presentation is either a replay/theft or a buggy client. Either way, the
-// correct response is to burn every active token for that user and force a
-// fresh login, not just reject the one request.
+// Rotation: every refresh consumes the presented token (deletes its row) and
+// issues a brand-new one in its place, so there is always exactly one
+// refresh-token row per user - never an accumulating history.
 export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
   const tokenHash = hashRefreshToken(rawRefreshToken);
   const existing = await prisma.refreshToken.findUnique({ where: { tokenHash } });
@@ -71,17 +74,8 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
     throw new UnauthorizedError("Invalid refresh token");
   }
 
-  if (existing.revokedAt) {
-    await prisma.refreshToken.updateMany({
-      where: { userId: existing.userId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
-    throw new UnauthorizedError(
-      "Refresh token reuse detected - all sessions revoked, please log in again",
-    );
-  }
-
   if (existing.expiresAt < new Date()) {
+    await prisma.refreshToken.delete({ where: { id: existing.id } });
     throw new UnauthorizedError("Refresh token expired, please log in again");
   }
 
@@ -98,10 +92,7 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
   const newExpiresAt = new Date(Date.now() + env.REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60 * 1000);
 
   await prisma.$transaction([
-    prisma.refreshToken.update({
-      where: { id: existing.id },
-      data: { revokedAt: new Date(), replacedByTokenHash: hashRefreshToken(newRawToken) },
-    }),
+    prisma.refreshToken.delete({ where: { id: existing.id } }),
     prisma.refreshToken.create({
       data: { tokenHash: hashRefreshToken(newRawToken), userId: user.id, expiresAt: newExpiresAt },
     }),
@@ -111,12 +102,9 @@ export const refresh = async (rawRefreshToken: string): Promise<AuthResult> => {
   return { accessToken, refreshToken: newRawToken, user: userDto };
 };
 
-// Idempotent on purpose - logging out with an already-revoked/unknown token
+// Idempotent on purpose - logging out with an already-removed/unknown token
 // still just succeeds, so callers never need to special-case "already logged out".
 export const logout = async (rawRefreshToken: string): Promise<void> => {
   const tokenHash = hashRefreshToken(rawRefreshToken);
-  await prisma.refreshToken.updateMany({
-    where: { tokenHash, revokedAt: null },
-    data: { revokedAt: new Date() },
-  });
+  await prisma.refreshToken.deleteMany({ where: { tokenHash } });
 };
