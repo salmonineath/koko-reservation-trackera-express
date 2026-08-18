@@ -6,3 +6,4 @@ doc/
 .claude/
 
 /src/generated/prisma
+/src/script/
