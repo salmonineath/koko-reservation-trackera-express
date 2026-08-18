@@ -39,7 +39,11 @@ const setRefreshCookie = (res: Response, token: string): void => {
 };
 
 const clearRefreshCookie = (res: Response): void => {
-  res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
+  // Must match setRefreshCookie's attributes (secure, sameSite), not just
+  // the path - a browser won't reliably treat a Set-Cookie missing
+  // Secure/SameSite=None as clearing a cookie that was set with them, so
+  // the original cookie survives "logout" instead of being deleted.
+  res.clearCookie(REFRESH_COOKIE_NAME, { ...baseCookieOptions, path: REFRESH_COOKIE_PATH });
 };
 
 // Derives the cookie's maxAge from the token's own `exp` claim instead of
@@ -64,7 +68,8 @@ const setAccessCookie = (res: Response, token: string): void => {
 };
 
 const clearAccessCookie = (res: Response): void => {
-  res.clearCookie(ACCESS_COOKIE_NAME, { path: "/" });
+  // Same reasoning as clearRefreshCookie - match setAccessCookie's attributes.
+  res.clearCookie(ACCESS_COOKIE_NAME, { ...baseCookieOptions, path: "/" });
 };
 
 export const loginController = async (req: Request, res: Response, next: NextFunction) => {

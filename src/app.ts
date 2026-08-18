@@ -25,19 +25,26 @@ if (env.NODE_ENV === "production") {
 
 app.use(helmet());
 
-// Only the configured frontend origin may call this API, and only with
-// credentials enabled (the refresh-token cookie requires it) - never "*".
-// A validator function (rather than a static origin string) means the
-// Access-Control-Allow-Origin header is only ever emitted when the request's
-// origin actually matches - a mismatched origin gets no such header at all,
-// instead of a header reflecting a value that doesn't match its own request.
+// Swagger UI's "Try it out" runs from this app's own origin (it's served by
+// this same app at /api-docs), not FRONTEND_ORIGIN - so it needs its own
+// allowlist entry. Only relevant outside production, since /api-docs itself
+// is disabled there (see below) - production's CORS behavior is unchanged.
+const swaggerOrigin = env.NODE_ENV !== "production" ? `http://localhost:${env.PORT}` : null;
+
+// Only the configured frontend origin (plus, in dev, Swagger UI's own origin)
+// may call this API, and only with credentials enabled (the refresh-token
+// cookie requires it) - never "*". A validator function (rather than a static
+// origin string) means the Access-Control-Allow-Origin header is only ever
+// emitted when the request's origin actually matches - a mismatched origin
+// gets no such header at all, instead of a header reflecting a value that
+// doesn't match its own request.
 app.use(
   cors({
     origin: (origin, callback) => {
       // `origin` is undefined for non-browser requests (curl, server-to-server
       // calls, health checks) - CORS is a browser-only mechanism, so those
       // aren't meaningfully restricted by it either way.
-      if (!origin || origin === env.FRONTEND_ORIGIN) {
+      if (!origin || origin === env.FRONTEND_ORIGIN || origin === swaggerOrigin) {
         callback(null, true);
         return;
       }
