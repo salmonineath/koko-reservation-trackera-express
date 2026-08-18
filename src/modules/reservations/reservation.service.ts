@@ -3,24 +3,24 @@ import { prisma } from "@/lib/prisma";
 import { NotFoundError } from "@/shared/errors";
 import type {
   CreateReservationDto,
-  DashboardStatsDto,
   ListReservationsDto,
   ReservationDto,
   UpdateReservationDto,
 } from "./reservation.dto";
 import { toReservationDto, toReservationDtoList } from "./reservation.dto";
-import type { DashboardStatsResult, StatCard } from "./reservation.types";
 
 export const createReservation = async (dto: CreateReservationDto): Promise<ReservationDto> => {
   const reservation = await prisma.reservation.create({ data: dto });
   return toReservationDto(reservation);
 };
 
-// `from`/`to` are plain calendar-day strings (YYYY-MM-DD, validated in
-// reservation.schema.ts) but createdAt is a full timestamp, so they're
-// expanded here to the first/last instant of that UTC calendar day - entirely
-// from the caller's own values, never a hardcoded date.
-const buildCreatedAtRange = (
+// `from`/`to` (and dateFrom/dateTo) are plain calendar-day strings
+// (YYYY-MM-DD, validated in reservation.schema.ts) but the DB columns they
+// filter are full timestamps, so they're expanded here to the first/last
+// instant of that UTC calendar day - entirely from the caller's own values,
+// never a hardcoded date. Shared by both pairs so dateTo doesn't cut off at
+// midnight while to correctly reaches end-of-day.
+const buildDayRange = (
   from?: string,
   to?: string,
 ): Prisma.DateTimeFilter<"Reservation"> | undefined => {
@@ -34,17 +34,13 @@ const buildCreatedAtRange = (
 
 const buildReservationWhere = (dto: ListReservationsDto): Prisma.ReservationWhereInput => {
   const { search, source, status, dateFrom, dateTo, from, to } = dto;
-  const createdAt = buildCreatedAtRange(from, to);
+  const date = buildDayRange(dateFrom, dateTo);
+  const createdAt = buildDayRange(from, to);
 
   return {
     ...(source && { source }),
     ...(status && { status }),
-    ...((dateFrom || dateTo) && {
-      date: {
-        ...(dateFrom && { gte: dateFrom }),
-        ...(dateTo && { lte: dateTo }),
-      },
-    }),
+    ...(date && { date }),
     ...(createdAt && { createdAt }),
     ...(search && {
       OR: [
@@ -107,93 +103,4 @@ export const updateReservation = async (dto: UpdateReservationDto): Promise<Rese
 export const deleteReservation = async (id: number): Promise<void> => {
   await getReservationOrThrow(id);
   await prisma.reservation.delete({ where: { id } });
-};
-
-// --- Dashboard stats ---------------------------------------------------
-//
-// Dashboard KPI cards/donuts only (see doc/DASHBOARD_SCOPE_REVIEW.md) -
-// deliberately excludes trend/time-series and anything social-media/content
-// related, since those are out of scope for this release regardless of
-// whether the data existed.
-
-const monthBounds = (month?: string) => {
-  const now = new Date();
-  const [year, monthNum] = month
-    ? (month.split("-").map(Number) as [number, number])
-    : [now.getUTCFullYear(), now.getUTCMonth() + 1];
-
-  return {
-    from: new Date(Date.UTC(year, monthNum - 1, 1)),
-    to: new Date(Date.UTC(year, monthNum, 1)),
-    prevFrom: new Date(Date.UTC(year, monthNum - 2, 1)),
-    prevTo: new Date(Date.UTC(year, monthNum - 1, 1)),
-  };
-};
-
-const getPeriodAggregates = async (from: Date, to: Date) => {
-  const where = { date: { gte: from, lt: to } };
-
-  const [total, statusGroups, guestSum] = await Promise.all([
-    prisma.reservation.count({ where }),
-    prisma.reservation.groupBy({ by: ["status"], where, _count: true }),
-    prisma.reservation.aggregate({ where, _sum: { guests: true } }),
-  ]);
-
-  return {
-    total,
-    guests: guestSum._sum.guests ?? 0,
-    statusCounts: statusGroups.map((row) => ({ status: row.status, count: row._count })),
-  };
-};
-
-const countForStatus = (
-  statusCounts: { status: string; count: number }[],
-  status: string,
-): number => statusCounts.find((row) => row.status === status)?.count ?? 0;
-
-// null (not 0%) when there's no previous-period baseline to compare against -
-// "0 -> 5" isn't a "500% increase," it's "not comparable."
-const percentDelta = (current: number, previous: number): number | null => {
-  if (previous === 0) {
-    return current === 0 ? 0 : null;
-  }
-  return Math.round(((current - previous) / previous) * 100);
-};
-
-const buildStatCard = (current: number, previous: number): StatCard => ({
-  current,
-  previous,
-  deltaPercent: percentDelta(current, previous),
-});
-
-export const getDashboardStats = async (dto: DashboardStatsDto): Promise<DashboardStatsResult> => {
-  const { from, to, prevFrom, prevTo } = monthBounds(dto.month);
-
-  const [current, previous, sourceGroups] = await Promise.all([
-    getPeriodAggregates(from, to),
-    getPeriodAggregates(prevFrom, prevTo),
-    prisma.reservation.groupBy({
-      by: ["source"],
-      where: { date: { gte: from, lt: to } },
-      _count: true,
-    }),
-  ]);
-
-  const currentCancelled = countForStatus(current.statusCounts, "CANCELLED");
-  const previousCancelled = countForStatus(previous.statusCounts, "CANCELLED");
-
-  return {
-    period: {
-      month: `${from.getUTCFullYear()}-${String(from.getUTCMonth() + 1).padStart(2, "0")}`,
-      from,
-      to,
-    },
-    totals: {
-      reservations: buildStatCard(current.total, previous.total),
-      cancelled: buildStatCard(currentCancelled, previousCancelled),
-      guests: buildStatCard(current.guests, previous.guests),
-    },
-    bySource: sourceGroups.map((row) => ({ source: row.source, count: row._count })),
-    byStatus: current.statusCounts,
-  };
 };

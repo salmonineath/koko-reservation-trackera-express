@@ -3,7 +3,6 @@ import {
   createReservationController,
   deleteReservationController,
   getReservationByIdController,
-  getReservationStatsController,
   listReservationsController,
   updateReservationController,
 } from "./reservation.controller";
@@ -57,10 +56,18 @@ reservationRoutes.post("/", createReservationController);
  *         schema: { $ref: '#/components/schemas/ReservationStatus' }
  *       - in: query
  *         name: dateFrom
- *         schema: { type: string, format: date-time }
+ *         schema: { type: string, format: date, example: "2026-08-12" }
+ *         description: >
+ *           Filters by the reservation's own date, not createdAt - see from
+ *           below for that. YYYY-MM-DD, inclusive, expanded to the start of
+ *           that UTC calendar day.
  *       - in: query
  *         name: dateTo
- *         schema: { type: string, format: date-time }
+ *         schema: { type: string, format: date, example: "2026-08-18" }
+ *         description: >
+ *           Filters by the reservation's own date, not createdAt - see to
+ *           below for that. YYYY-MM-DD, inclusive, expanded to the end of
+ *           that UTC calendar day.
  *       - in: query
  *         name: from
  *         schema: { type: string, format: date, example: "2026-08-12" }
@@ -101,33 +108,6 @@ reservationRoutes.post("/", createReservationController);
  *               $ref: '#/components/schemas/ValidationError'
  */
 reservationRoutes.get("/", listReservationsController);
-
-/**
- * @openapi
- * /reservations/stats:
- *   get:
- *     summary: Dashboard KPI cards + donuts (reservation counts/guests, this month vs last)
- *     description: >
- *       Reservation-derived stats only - deliberately excludes trend/time-series
- *       data and anything social-media/content related (out of scope this
- *       release, see doc/DASHBOARD_SCOPE_REVIEW.md).
- *     tags: [Reservations]
- *     parameters:
- *       - in: query
- *         name: month
- *         schema: { type: string, example: "2026-05" }
- *         description: YYYY-MM. Defaults to the current calendar month.
- *     responses:
- *       200:
- *         description: Dashboard stats for the requested month vs the previous month
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/DashboardStats'
- *       400:
- *         description: Validation failed (bad month format)
- */
-reservationRoutes.get("/stats", getReservationStatsController);
 
 /**
  * @openapi

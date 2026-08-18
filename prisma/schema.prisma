@@ -24,6 +24,7 @@ enum ReservationSource {
 enum ReservationStatus {
   PENDING
   CONFIRMED
+  COMPLETED
   CANCELLED
 }
 
