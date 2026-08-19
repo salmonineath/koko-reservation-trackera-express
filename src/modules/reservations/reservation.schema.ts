@@ -6,18 +6,28 @@ import { dateOnlyQueryParam } from "@/shared/date-query.schema";
 // z.enum() reads them directly, so a new value added to
 // prisma/schema.prisma's enum is accepted here automatically instead of
 // needing to be re-typed in a second place.
-export const createReservationSchema = z.object({
+//
+// `status` has no default here - the default only belongs on create (see
+// createReservationSchema below). Zod still runs a field's `.default()` for
+// an absent key even after `.partial()`, so putting the default directly on
+// this shared object would make every PATCH that omits `status` silently
+// reset it to PENDING instead of leaving it untouched.
+const reservationFields = z.object({
   customerName: z.string().trim().min(1, "customerName is required"),
   phone: z.string().trim().min(1, "phone is required"),
   // Accepts an ISO 8601 string (e.g. "2026-05-15T19:00:00Z") combining date + time.
   date: z.coerce.date(),
   guests: z.coerce.number().int().positive(),
   source: z.enum(ReservationSource),
-  status: z.enum(ReservationStatus).default(ReservationStatus.PENDING),
+  status: z.enum(ReservationStatus),
   notes: z.string().trim().min(1).max(500).optional(),
 });
 
-export const updateReservationSchema = createReservationSchema.partial();
+export const createReservationSchema = reservationFields.extend({
+  status: z.enum(ReservationStatus).default(ReservationStatus.PENDING),
+});
+
+export const updateReservationSchema = reservationFields.partial();
 
 export const listReservationsQuerySchema = z
   .object({

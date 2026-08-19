@@ -104,7 +104,7 @@ const options: swaggerJsdoc.Options = {
         },
         ReservationStatus: {
           type: "string",
-          enum: ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"],
+          enum: ["PENDING", "CONFIRMED", "CANCELLED"],
         },
         ReservationInput: {
           type: "object",
@@ -158,7 +158,8 @@ const options: swaggerJsdoc.Options = {
               type: "object",
               properties: {
                 reservations: { $ref: "#/components/schemas/DashboardStatCard" },
-                completed: { $ref: "#/components/schemas/DashboardStatCard" },
+                confirmed: { $ref: "#/components/schemas/DashboardStatCard" },
+                pending: { $ref: "#/components/schemas/DashboardStatCard" },
                 cancelled: { $ref: "#/components/schemas/DashboardStatCard" },
                 guests: { $ref: "#/components/schemas/DashboardStatCard" },
               },

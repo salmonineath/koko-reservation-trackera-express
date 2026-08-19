@@ -112,8 +112,10 @@ export const getDashboardStats = async (dto: DashboardQueryDto): Promise<Dashboa
     }),
   ]);
 
-  const currentCompleted = countForStatus(current.statusCounts, "COMPLETED");
-  const previousCompleted = countForStatus(previous.statusCounts, "COMPLETED");
+  const currentConfirmed = countForStatus(current.statusCounts, "CONFIRMED");
+  const previousConfirmed = countForStatus(previous.statusCounts, "CONFIRMED");
+  const currentPending = countForStatus(current.statusCounts, "PENDING");
+  const previousPending = countForStatus(previous.statusCounts, "PENDING");
   const currentCancelled = countForStatus(current.statusCounts, "CANCELLED");
   const previousCancelled = countForStatus(previous.statusCounts, "CANCELLED");
 
@@ -125,7 +127,8 @@ export const getDashboardStats = async (dto: DashboardQueryDto): Promise<Dashboa
     period: { month, from: currentRange.from, to: currentRange.to },
     totals: {
       reservations: buildStatCard(current.total, previous.total),
-      completed: buildStatCard(currentCompleted, previousCompleted),
+      confirmed: buildStatCard(currentConfirmed, previousConfirmed),
+      pending: buildStatCard(currentPending, previousPending),
       cancelled: buildStatCard(currentCancelled, previousCancelled),
       guests: buildStatCard(current.guests, previous.guests),
     },

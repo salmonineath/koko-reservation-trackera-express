@@ -28,7 +28,7 @@ export const connectDB = async (): Promise<void> => {
       );
 
       if (isLastAttempt) {
-        process.exit(1);
+        throw new Error("Database connection failed please try again.");
       }
       await wait(CONNECT_RETRY_DELAY_MS);
     }

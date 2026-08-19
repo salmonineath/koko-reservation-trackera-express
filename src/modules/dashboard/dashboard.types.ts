@@ -23,7 +23,8 @@ export interface DashboardStatsResult {
   };
   totals: {
     reservations: StatCard;
-    completed: StatCard;
+    confirmed: StatCard;
+    pending: StatCard;
     cancelled: StatCard;
     guests: StatCard;
   };
