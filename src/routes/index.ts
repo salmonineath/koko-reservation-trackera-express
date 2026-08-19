@@ -2,6 +2,7 @@ import { Router } from "express";
 import { requireAuth } from "@/middleware/auth.middleware";
 import { requireCsrfForMutations } from "@/middleware/csrf.middleware";
 import { authRoutes } from "@/modules/auth/auth.routes";
+import { dashboardRoutes } from "@/modules/dashboard/dashboard.routes";
 import { reservationRoutes } from "@/modules/reservations/reservation.routes";
 import { meRoutes, userRoutes } from "@/modules/users/user.routes";
 
@@ -21,3 +22,4 @@ apiRouter.use("/auth", authRoutes);
 apiRouter.use("/me", requireCsrfForMutations, requireAuth, meRoutes);
 apiRouter.use("/users", requireCsrfForMutations, requireAuth, userRoutes);
 apiRouter.use("/reservations", requireCsrfForMutations, requireAuth, reservationRoutes);
+apiRouter.use("/dashboard", requireCsrfForMutations, requireAuth, dashboardRoutes);

@@ -3,14 +3,12 @@ import { ValidationError } from "@/shared/errors";
 import type { UpdateReservationDto } from "./reservation.dto";
 import {
   createReservationSchema,
-  dashboardStatsQuerySchema,
   listReservationsQuerySchema,
   updateReservationSchema,
 } from "./reservation.schema";
 import {
   createReservation,
   deleteReservation,
-  getDashboardStats,
   getReservationById,
   listReservations,
   updateReservation,
@@ -91,20 +89,6 @@ export const deleteReservationController = async (
     const id = parseReservationId(req.params.id);
     await deleteReservation(id);
     res.status(204).send();
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getReservationStatsController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  try {
-    const dto = dashboardStatsQuerySchema.parse(req.query);
-    const stats = await getDashboardStats(dto);
-    res.json(stats);
   } catch (error) {
     next(error);
   }

@@ -104,7 +104,7 @@ const options: swaggerJsdoc.Options = {
         },
         ReservationStatus: {
           type: "string",
-          enum: ["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"],
+          enum: ["PENDING", "CONFIRMED", "CANCELLED"],
         },
         ReservationInput: {
           type: "object",
@@ -144,7 +144,12 @@ const options: swaggerJsdoc.Options = {
             period: {
               type: "object",
               properties: {
-                month: { type: "string", example: "2026-05" },
+                month: {
+                  type: "string",
+                  nullable: true,
+                  example: "2026-08",
+                  description: "Null when a custom from/to range was requested instead of a month.",
+                },
                 from: { type: "string", format: "date-time" },
                 to: { type: "string", format: "date-time" },
               },
@@ -153,7 +158,8 @@ const options: swaggerJsdoc.Options = {
               type: "object",
               properties: {
                 reservations: { $ref: "#/components/schemas/DashboardStatCard" },
-                completed: { $ref: "#/components/schemas/DashboardStatCard" },
+                confirmed: { $ref: "#/components/schemas/DashboardStatCard" },
+                pending: { $ref: "#/components/schemas/DashboardStatCard" },
                 cancelled: { $ref: "#/components/schemas/DashboardStatCard" },
                 guests: { $ref: "#/components/schemas/DashboardStatCard" },
               },
@@ -165,6 +171,11 @@ const options: swaggerJsdoc.Options = {
                 properties: {
                   source: { $ref: "#/components/schemas/ReservationSource" },
                   count: { type: "integer", example: 45 },
+                  percent: {
+                    type: "integer",
+                    example: 35,
+                    description: "Rounded share of the current period's total reservations.",
+                  },
                 },
               },
             },
@@ -175,6 +186,11 @@ const options: swaggerJsdoc.Options = {
                 properties: {
                   status: { $ref: "#/components/schemas/ReservationStatus" },
                   count: { type: "integer", example: 96 },
+                  percent: {
+                    type: "integer",
+                    example: 75,
+                    description: "Rounded share of the current period's total reservations.",
+                  },
                 },
               },
             },

@@ -2,18 +2,17 @@ import type { z } from "zod";
 import type { ReservationModel } from "@/generated/prisma/models";
 import type {
   createReservationSchema,
-  dashboardStatsQuerySchema,
   listReservationsQuerySchema,
   updateReservationSchema,
 } from "./reservation.schema";
 
 // --- Input DTOs: what each service operation needs -------------------------
 //
-// create/list/dashboard-stats need exactly what their schema already
-// validated, so their DTOs are plain aliases of the schema's inferred type.
+// create/list need exactly what their schema already validated, so their
+// DTOs are plain aliases of the schema's inferred type. (Dashboard stats
+// moved to src/modules/dashboard - see dashboard.dto.ts.)
 export type CreateReservationDto = z.infer<typeof createReservationSchema>;
 export type ListReservationsDto = z.infer<typeof listReservationsQuerySchema>;
-export type DashboardStatsDto = z.infer<typeof dashboardStatsQuerySchema>;
 
 // Updating is different: the id comes from the route param, not the request
 // body, so the schema alone can't describe what the service needs - the DTO
