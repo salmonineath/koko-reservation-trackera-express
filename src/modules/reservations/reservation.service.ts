@@ -65,7 +65,12 @@ export const listReservations = async (dto: ListReservationsDto) => {
   const [data, total] = await Promise.all([
     prisma.reservation.findMany({
       where,
-      orderBy: { date: "asc" },
+      // Newest-created first - not the reservation's own `date` - so a
+      // reservation just entered for next month still shows up at the top
+      // of the list instead of being buried under everything with an
+      // earlier reservation date (most relevant when browsing "All
+      // Reservations" with no date filter applied at all).
+      orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
     }),
