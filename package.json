@@ -65,5 +65,8 @@
     "*.{ts,js,json}": [
       "biome check --write --no-errors-on-unmatched"
     ]
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2"
   }
 }
