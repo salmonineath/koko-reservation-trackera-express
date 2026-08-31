@@ -9,7 +9,6 @@ export const createUserSchema = z.object({
   email: z.string().trim().toLowerCase().email("email must be a valid email address"),
   password: passwordSchema,
   fullName: z.string().trim().min(1).optional(),
-  username: z.string().trim().min(1).optional(),
   // Free-form display label, not an enum - see user.dto.ts. Doesn't gate anything.
   role: z.string().trim().min(1).optional(),
 });
@@ -19,7 +18,7 @@ export const createUserSchema = z.object({
 export const updateUserSchema = createUserSchema.partial();
 
 export const listUsersQuerySchema = z.object({
-  // Matches email, username, or full name.
+  // Matches email or full name.
   search: z.string().trim().min(1).optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(12),

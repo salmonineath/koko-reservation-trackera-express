@@ -16,7 +16,6 @@ const USER_SELECT = {
   id: true,
   email: true,
   fullName: true,
-  username: true,
   role: true,
   createdAt: true,
 } satisfies Prisma.UserSelect;
@@ -36,9 +35,9 @@ const conflictingFields = (
   return Array.isArray(constraint?.fields) ? constraint.fields.join(", ") : undefined;
 };
 
-// email and username both carry a DB-level unique constraint - rather than
-// pre-checking (which races against a concurrent request), let Postgres
-// enforce it and translate the resulting P2002 into a clean 409.
+// email carries a DB-level unique constraint - rather than pre-checking
+// (which races against a concurrent request), let Postgres enforce it and
+// translate the resulting P2002 into a clean 409.
 const withUniqueConstraintMapping = async <T>(fn: () => Promise<T>): Promise<T> => {
   try {
     return await fn();
@@ -72,7 +71,6 @@ export const createUser = async (dto: CreateUserDto): Promise<UserDto> => {
         email: dto.email,
         passwordHash,
         fullName: dto.fullName,
-        username: dto.username,
         role: dto.role,
       },
       select: USER_SELECT,
@@ -86,7 +84,6 @@ const buildUserWhere = (search?: string): Prisma.UserWhereInput => ({
   ...(search && {
     OR: [
       { email: { contains: search, mode: "insensitive" as const } },
-      { username: { contains: search, mode: "insensitive" as const } },
       { fullName: { contains: search, mode: "insensitive" as const } },
     ],
   }),
