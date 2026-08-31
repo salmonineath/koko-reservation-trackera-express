@@ -18,16 +18,16 @@ export interface UpdateUserDto {
 // passwordHash never does. Adding a column to schema.prisma never silently
 // exposes it here.
 //
-// fullName/username/role are display-only profile fields - null until
-// someone sets them (see src/script/seed.ts's optional ADMIN_FULLNAME/
-// ADMIN_USERNAME/ADMIN_ROLE). role is a free-form string (not an enum) and
-// doesn't gate anything; there's still no permission model (see
-// doc/FRONTEND_API_SCOPE.md).
+// fullName/role are display-only profile fields - null until someone sets
+// them (see src/script/seed.ts's optional ADMIN_FULLNAME/ADMIN_ROLE). role
+// is a free-form string (not an enum) and doesn't gate anything; there's
+// still no permission model (see doc/FRONTEND_API_SCOPE.md). username was
+// dropped from the User table (see prisma/migrations/
+// 20260831112339_user_schema_updated) - not represented here anymore.
 export type UserDto = {
   id: number;
   email: string;
   fullName: string | null;
-  username: string | null;
   role: string | null;
   createdAt: Date;
 };
@@ -38,7 +38,6 @@ export const toUserDto = (user: UserDto): UserDto => ({
   id: user.id,
   email: user.email,
   fullName: user.fullName,
-  username: user.username,
   role: user.role,
   createdAt: user.createdAt,
 });

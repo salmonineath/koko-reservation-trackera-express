@@ -37,14 +37,13 @@ const options: swaggerJsdoc.Options = {
         AuthUser: {
           type: "object",
           description:
-            "fullName/username/role are display-only - null until set (see " +
+            "fullName/role are display-only - null until set (see " +
             "src/script/seed.ts) - and don't grant or restrict anything; there's " +
             "still no permission model.",
           properties: {
             id: { type: "integer", example: 1 },
             email: { type: "string", example: "you@example.com" },
             fullName: { type: "string", nullable: true, example: "Jane Doe" },
-            username: { type: "string", nullable: true, example: "jane" },
             role: {
               type: "string",
               nullable: true,
@@ -64,7 +63,6 @@ const options: swaggerJsdoc.Options = {
             email: { type: "string", format: "email", example: "you@example.com" },
             password: { type: "string", format: "password", example: "at-least-8-chars" },
             fullName: { type: "string", example: "Jane Doe" },
-            username: { type: "string", example: "jane" },
             role: { type: "string", nullable: true, example: "ADMIN" },
           },
         },

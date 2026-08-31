@@ -66,7 +66,7 @@ export const userRoutes = Router();
  *             schema:
  *               $ref: '#/components/schemas/ValidationError'
  *       409:
- *         description: Email or username already in use
+ *         description: Email already in use
  */
 userRoutes.post("/", createUserController);
 
@@ -80,7 +80,7 @@ userRoutes.post("/", createUserController);
  *       - in: query
  *         name: search
  *         schema: { type: string }
- *         description: Matches email, username, or full name
+ *         description: Matches email or full name
  *       - in: query
  *         name: page
  *         schema: { type: integer, default: 1 }
@@ -157,7 +157,7 @@ userRoutes.get("/:id", getUserByIdController);
  *       404:
  *         description: User not found
  *       409:
- *         description: Email or username already in use
+ *         description: Email already in use
  */
 userRoutes.patch("/:id", updateUserController);
 
